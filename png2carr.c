@@ -109,10 +109,10 @@ png2carr(const char *path, const char *varname)
 	for (i = 0; i < width * height; ++i) {
 		if (i % 5 == 0)
 			printf("\n\t");
-		printf("0x%08x, ", rows[i/width][(i%width)*4+3] << 24 |
-		                   rows[i/width][(i%width)*4+0] << 16 |
-		                   rows[i/width][(i%width)*4+1] <<  8 |
-		                   rows[i/width][(i%width)*4+2] <<  0);
+		printf("0x%08x, ", rows[i / width][(i % width) * 4 + 3] << 24 |
+		                   rows[i / width][(i % width) * 4 + 0] << 16 |
+		                   rows[i / width][(i % width) * 4 + 1] <<  8 |
+		                   rows[i / width][(i % width) * 4 + 2] <<  0);
 	}
 
 	printf("\n};\n");
