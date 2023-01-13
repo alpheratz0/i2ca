@@ -164,8 +164,11 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (NULL == inpath || NULL == varname)
-		die("you must specify an input and a varname");
+	if (NULL == inpath)
+		die("you must specify an input file");
+
+	if (NULL == varname)
+		varname = "image";
 
 	png2carr(inpath, varname);
 
