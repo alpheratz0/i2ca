@@ -15,7 +15,10 @@
 
 */
 
+#define _XOPEN_SOURCE  500
+
 #include <errno.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -23,6 +26,11 @@
 #include <string.h>
 #include <setjmp.h>
 #include <png.h>
+
+enum case_kind {
+	CASE_UPPER,
+	CASE_LOWER
+};
 
 static void
 die(const char *fmt, ...)
@@ -37,10 +45,24 @@ die(const char *fmt, ...)
 	exit(1);
 }
 
+static char *
+estrdupwithcase(const char *str, enum case_kind c)
+{
+	char *res, *p;
+	int (*convfn)(int);
+	if (NULL == (res = strdup(str)))
+		die("OOM");
+	convfn = c == CASE_UPPER ? toupper : tolower;
+	for (p = res; *p; ++p)
+		*p = convfn(*p);
+	return res;
+}
+
 static void
 png2carr(const char *path, const char *varname)
 {
 	FILE *fp;
+	char *varname_uppercase, *varname_lowercase;
 	png_struct *png;
 	png_info *pnginfo;
 	png_byte **rows, bit_depth;
@@ -102,13 +124,17 @@ png2carr(const char *path, const char *varname)
 
 	png_read_image(png, rows);
 
-	printf("const uint32_t %s_width         = %d;\n", varname, width);
-	printf("const uint32_t %s_height        = %d;\n", varname, height);
-	printf("const uint32_t %s_pixels[%d*%d] = {", varname, width, height);
+	varname_lowercase = estrdupwithcase(varname, CASE_LOWER);
+	varname_uppercase = estrdupwithcase(varname, CASE_UPPER);
+
+	printf("#define %s_WIDTH  (%d)\n", varname_uppercase, width);
+	printf("#define %s_HEIGHT (%d)\n\n", varname_uppercase, height);
+	printf("const uint32_t %s_px[%s_WIDTH * %s_HEIGHT] = {", varname_lowercase,
+			varname_uppercase, varname_uppercase);
 
 	for (i = 0; i < width * height; ++i) {
 		if (i % 5 == 0)
-			printf("\n\t");
+			printf("\n\t/* (%d, %d) */ ", i % width, i / width);
 		printf("0x%08x, ", rows[i / width][(i % width) * 4 + 3] << 24 |
 		                   rows[i / width][(i % width) * 4 + 0] << 16 |
 		                   rows[i / width][(i % width) * 4 + 1] <<  8 |
@@ -120,6 +146,8 @@ png2carr(const char *path, const char *varname)
 	for (y = 0; y < height; ++y)
 		png_free(png, rows[y]);
 
+	free(varname_lowercase);
+	free(varname_uppercase);
 	png_free(png, rows);
 	png_read_end(png, NULL);
 	png_free_data(png, pnginfo, PNG_FREE_ALL, -1);
