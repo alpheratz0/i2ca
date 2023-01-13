@@ -131,7 +131,7 @@ png2carr(const char *path, const char *varname)
 static void
 usage(void)
 {
-	puts("usage: png2carr [-hv] [-i input] [-n variable_name]");
+	puts("usage: png2carr [-hv] [-n variable_name] [image_path]");
 	exit(0);
 }
 
@@ -154,12 +154,13 @@ main(int argc, char **argv)
 			switch ((*argv)[1]) {
 				case 'h': usage(); break;
 				case 'v': version(); break;
-				case 'i': --argc; inpath = *++argv; break;
 				case 'n': --argc; varname = *++argv; break;
 				default: die("invalid option %s", *argv); break;
 			}
 		} else {
-			die("unexpected argument: %s", *argv);
+			if (NULL != inpath)
+				die("unexpected argument: %s", *argv);
+			inpath = *argv;
 		}
 	}
 
