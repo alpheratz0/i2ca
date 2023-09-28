@@ -29,6 +29,11 @@ enum case_kind {
 	CASE_LOWER
 };
 
+struct Image {
+	int w, h;
+	unsigned char *px;
+};
+
 static void
 die(const char *fmt, ...)
 {
@@ -55,43 +60,51 @@ estrdupwithcase(const char *str, enum case_kind c)
 	return res;
 }
 
-static void
-i2ca(const char *path, const char *varname)
+static int
+image_load(const char *path, struct Image *img)
 {
-	int w, h, i;
-	unsigned char *px;
+	if (!(img->px = stbi_load(path, &img->w, &img->h, NULL, 4)))
+		return -1;
+	return 0;
+}
+
+static void
+image_free(struct Image *img)
+{
+	stbi_image_free(img->px);
+}
+
+static void
+i2ca(const struct Image *img, const char *varname)
+{
+	int i;
 	char *varname_uppercase, *varname_lowercase;
 
 	varname_lowercase = estrdupwithcase(varname, CASE_LOWER);
 	varname_uppercase = estrdupwithcase(varname, CASE_UPPER);
-	px = stbi_load(path, &w, &h, NULL, 4);
 
-	if (!px)
-		die("couldn't load image");
-
-	printf("#define %s_WIDTH  (%d)\n", varname_uppercase, w);
-	printf("#define %s_HEIGHT (%d)\n\n", varname_uppercase, h);
+	printf("#define %s_WIDTH  (%d)\n", varname_uppercase, img->w);
+	printf("#define %s_HEIGHT (%d)\n\n", varname_uppercase, img->h);
 	printf("const uint32_t %s_px[%s_WIDTH * %s_HEIGHT] = {", varname_lowercase,
 			varname_uppercase, varname_uppercase);
 
-	for (i = 0; i < w * h; ++i) {
+	for (i = 0; i < img->w * img->h; ++i) {
 		if (i % 5 == 0)
-			printf("\n\t/* (y:%3d, x:%3d) */ ", i / w, i % w);
-		printf("0x%02x%02x%02x%02x, ",
-				px[i*4+3], px[i*4], px[i*4+1], px[i*4+2]);
+			printf("\n\t/* (y:%3d, x:%3d) */ ", i / img->w, i % img->w);
+		printf("0x%02x%02x%02x%02x, ", img->px[i*4+3], img->px[i*4],
+				img->px[i*4+1], img->px[i*4+2]);
 	}
 
 	printf("\n};\n");
 
 	free(varname_lowercase);
 	free(varname_uppercase);
-	stbi_image_free(px);
 }
 
 static void
 usage(void)
 {
-	puts("usage: i2ca [-hv] [-n variable_name] [image_path]");
+	puts("usage: i2ca [-fhv] [-n variable_name] [image_path]");
 	exit(0);
 }
 
@@ -105,13 +118,17 @@ version(void)
 int
 main(int argc, char **argv)
 {
+	struct Image img;
 	const char *inpath, *varname;
+	int force;
 
 	inpath = varname = NULL;
+	force = 0;
 
 	while (++argv, --argc > 0) {
 		if ((*argv)[0] == '-' && (*argv)[1] != '\0' && (*argv)[2] == '\0') {
 			switch ((*argv)[1]) {
+			case 'f': force = 1; break;
 			case 'h': usage(); break;
 			case 'v': version(); break;
 			case 'n': --argc; varname = *++argv; break;
@@ -130,7 +147,15 @@ main(int argc, char **argv)
 	if (NULL == varname)
 		varname = "image";
 
-	i2ca(inpath, varname);
+	if (image_load(inpath, &img) < 0)
+		die("couldn't load image");
+
+	if ((img.w > 256 || img.h > 256) && !force)
+		die("image is too big, use -f flag to force conversion");
+
+	i2ca(&img, varname);
+
+	image_free(&img);
 
 	return 0;
 }
