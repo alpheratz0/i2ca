@@ -6,7 +6,7 @@ include config.mk
 all: img2carr
 
 img2carr: img2carr.o
-	$(CC) $(LDFLAGS) -o img2carr img2carr.o $(LDLIBS)
+	$(CC) $(LDFLAGS) -o img2carr img2carr.o
 
 clean:
 	rm -f img2carr img2carr.o img2carr-$(VERSION).tar.gz
