@@ -34,7 +34,7 @@ die(const char *fmt, ...)
 {
 	va_list args;
 
-	fputs("img2carr: ", stderr);
+	fputs("i2ca: ", stderr);
 	va_start(args, fmt);
 	vfprintf(stderr, fmt, args);
 	va_end(args);
@@ -56,7 +56,7 @@ estrdupwithcase(const char *str, enum case_kind c)
 }
 
 static void
-img2carr(const char *path, const char *varname)
+i2ca(const char *path, const char *varname)
 {
 	int w, h, i;
 	unsigned char *px;
@@ -91,14 +91,14 @@ img2carr(const char *path, const char *varname)
 static void
 usage(void)
 {
-	puts("usage: img2carr [-hv] [-n variable_name] [image_path]");
+	puts("usage: i2ca [-hv] [-n variable_name] [image_path]");
 	exit(0);
 }
 
 static void
 version(void)
 {
-	puts("img2carr version "VERSION);
+	puts("i2ca version "VERSION);
 	exit(0);
 }
 
@@ -130,7 +130,7 @@ main(int argc, char **argv)
 	if (NULL == varname)
 		varname = "image";
 
-	img2carr(inpath, varname);
+	i2ca(inpath, varname);
 
 	return 0;
 }

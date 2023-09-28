@@ -1,5 +1,5 @@
-img2carr is an image to c array converter.
-For more information about it's usage check `man img2carr`.
+i2ca is an image to c array converter.
+For more information about it's usage check `man i2ca`.
 
 In order to build this program you need to run `make`.
 
